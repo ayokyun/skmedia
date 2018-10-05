@@ -41,7 +41,7 @@ class Esp3k5(object):
             print("vertify Error ")
 
     def getUIvalue(self):
-        pass
+        data = {}
         # return self.data
 
     def __del__(self):
