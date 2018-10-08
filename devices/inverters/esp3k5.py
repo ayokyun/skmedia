@@ -1,18 +1,24 @@
 from pprint import pprint
+import struct
 
 
 class Esp3k5(object):
-    def __init__(self, sectionId):
-        self.sectionId = sectionId
+    # dataAddressMap = []
+    #     Header: 1
+
+    # }
+
+    def __init__(self, sectionId: int):
+        self.sectionId: int = sectionId
         self.rawData = None
         self.data = None
 
     @staticmethod
-    def bytes2int(b):
-        if type(b) == bytearray:
-            return int.from_bytes(b, byteorder='little', signed=False)
-        elif type(b) == int:
-            return b
+    def bytes2int(_bytes):
+        if type(_bytes) == bytearray or type(_bytes) == bytes:
+            return int.from_bytes(_bytes, byteorder='little', signed=False)
+        elif type(_bytes) == int:
+            return _bytes
 
     def request(self):
         print("request :: 아직 미구현")
@@ -50,27 +56,9 @@ class Esp3k5(object):
 
 if __name__ == '__main__':
 
-    def makeDummyData():
-        """ ESP3K5 프로토콜 예시에 맞춘 더미데이터 생성 
+    import esp3k5_dummy
 
-        return bytearray """
-        dummy = []
-        # Header
-        dummy.extend([0xb1, 0xb7])
-        # Section Id
-        dummy.extend([0x01])
-        # SolarVoltage~EnergyToday
-        dummy.extend([0x15, 0x0e, 0x05, 0x01, 0x01, 0x0e, 0x9a,
-                      0x08, 0xc8, 0x01, 0x60, 0x01, 0xff, 0x00])
-        # EnergyTotal~DataCheck
-        dummy.extend([0x9f, 0x86, 0x01, 0x00, 0x00, 0x00, 0x00,
-                      0x01, 0x59, 0x02, 0x01, 0x01, 0x63, 0x6e, 0x9d])
-
-        dummyArray = bytearray(dummy)
-        # print("dummy Array : ", dummyArray)
-        return dummyArray
-
-    data = makeDummyData()
+    data = esp3k5_dummy.makeDummyData()
 
     esp = Esp3k5(1)
     esp.request()  # not Implement
