@@ -3,13 +3,11 @@ import struct
 
 
 class Esp3k5(object):
-    # dataAddressMap = []
-    #     Header: 1
 
-    # }
+    queryFormat = [0x0a, 0x96, 0xFF, 0x54, 0x18, 0x05, 0xFF]
 
-    def __init__(self, sectionId: int):
-        self.sectionId: int = sectionId
+    def __init__(self, stationId: int):
+        self.stationId: int = stationId
         self.rawData = None
         self.data = None
 
@@ -23,6 +21,12 @@ class Esp3k5(object):
     def request(self):
         print("request :: 아직 미구현")
         # raise NotImplementedError
+
+    def makeQuery(self):
+        ret = bytearray(self.queryFormat)
+        ret[2] = self.stationId
+        ret[6] = (ret[2] + ret[3] + ret[4] )% 256
+        return bytes(ret)
 
     def verifyResponse(self, data):
         print("verifyResponse :: 아직 미구현")
@@ -47,7 +51,8 @@ class Esp3k5(object):
             print("vertify Error ")
 
     def getUIvalue(self):
-        data = {}
+        # data = {}
+        pass
         # return self.data
 
     def __del__(self):
