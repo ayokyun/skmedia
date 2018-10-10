@@ -1,4 +1,5 @@
 from pprint import pprint
+import serial
 import struct
 
 
@@ -25,15 +26,28 @@ class Esp3k5(object):
     def makeQuery(self):
         ret = bytearray(self.queryFormat)
         ret[2] = self.stationId
-        ret[6] = (ret[2] + ret[3] + ret[4] )% 256
+        ret[6] = (ret[2] + ret[3] + ret[4]) % 256
         return bytes(ret)
 
-    def verifyResponse(self, data):
+    def getRawData(self):
+
+        with serial.Serial('COM8', 9600, timeout=0.1) as ser:
+            ser.write(self.makeQuery())
+            line = ser.readline()  # read a '\n' terminated line
+            return line
+
+    def updateData(self):
+        pass
+        # return True  # 성공 시
+
+        # return False  # 실패 시
+
+    def verifyRawData(self, data):
         print("verifyResponse :: 아직 미구현")
         return True
 
     def parseResponse(self, data):
-        if self.verifyResponse(data):
+        if self.verifyRawData(data):
             rawData = dict()
             rawData['solarVoltage1'] = self.bytes2int(data[3:5])
             rawData['solarVoltage2'] = self.bytes2int(data[7:9])
@@ -49,11 +63,6 @@ class Esp3k5(object):
             self.rawData = rawData
         else:
             print("vertify Error ")
-
-    def getUIvalue(self):
-        # data = {}
-        pass
-        # return self.data
 
     def __del__(self):
         pass
