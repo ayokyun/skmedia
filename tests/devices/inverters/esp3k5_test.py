@@ -4,8 +4,8 @@ import unittest
 from devices.inverters import esp3k5
 
 
-class HelperTest(unittest.TestCase):
-    helper = esp3k5.Helper
+class UtilsTest(unittest.TestCase):
+    utils = esp3k5.Utils
     protocol = esp3k5.Protocol
     rawData = bytearray([0xB1, 0xB7, 0x01, 0x15, 0x0E,
                          0x05, 0x01, 0x01, 0x0E, 0x9A,
@@ -17,14 +17,19 @@ class HelperTest(unittest.TestCase):
 
     def test_calculate_checksum(self):
         """ return type is bool """
-        ret = self.helper.calculate_checksum(self.rawData[:-1])
+        ret = self.utils.calculate_checksum(self.rawData[:-1])
         self.assertEqual(ret, 0x9d)
 
     # @unittest.
     def test_get_data_from_bytes(self):
         """ get data from bytes """
+
+        protocol = self.protocol.response_protocol["energyTotal"]
+        ret = self.utils.get_data_from_bytes(self.rawData, protocol)
+        self.assertEqual(ret, 99999)
+
         protocol = self.protocol.response_protocol["solarVoltage1"]
-        ret = self.helper.get_data_from_bytes(self.rawData, protocol)
+        ret = self.utils.get_data_from_bytes(self.rawData, protocol)
         self.assertEqual(ret, 360.5)
 
 
@@ -127,29 +132,26 @@ class VerifyResponseTest(unittest.TestCase):
         self.assertFalse(self.esp3k5.verify_response(invalidData))
 
 
-@unittest.skip("dd")
 class ParseDataTest(unittest.TestCase):
 
     def setUp(self):
         self.station_id = 1
         self.esp3k5 = esp3k5.Esp3k5(self.station_id)
-        self.rawData = bytearray([0xB1, 0xB7, 0x01, 0x15, 0x0E,
-                                  0x05, 0x01, 0x01, 0x0E, 0x9A,
-                                  0x08, 0xC8, 0x01, 0x60, 0x01,
-                                  0xFF, 0x00, 0x9F, 0x86, 0x01,
-                                  0x00, 0x00, 0x00, 0x00, 0x01,
-                                  0x59, 0x02, 0x01, 0x01, 0x63,
-                                  0x6E, 0x9D])
+        self.rawData = bytearray
 
     def test_get_rawData(self):
         ret = self.esp3k5.get_rawdata("COM8", 9600)
         self.assertEqual(type(ret), bytes)  # check Type
         self.assertEqual(len(ret), 32)  # check Length
 
+    # @unittest.skip("dd")
     def test_parse_response(self):
-
         self.assertIsNotNone(self.esp3k5.parse_response(self.rawData))
-        self.assertIsNotNone(self.esp3k5.data)
+        self.assertEqual(self.esp3k5.data["solarVoltage1"], 360.5)
+
+    def test_update(self):
+        self.esp3k5.update()
+
         self.assertEqual(self.esp3k5.data["solarVoltage1"], 360.5)
 
 

@@ -3,7 +3,7 @@ import serial
 import collections
 
 
-class Helper:
+class Utils:
 
     @staticmethod
     def bytes_to_int(_bytes):
@@ -22,12 +22,11 @@ class Helper:
 
     @staticmethod
     def get_data_from_bytes(raw_data, protocol):
-        print(raw_data, protocol)
         data = raw_data[protocol['idx']:protocol['idx'] + protocol['length']]
-
         data = int.from_bytes(data, byteorder='little', signed=False)
-        if protocol['devide']:
-            data /=  protocol['devide']
+
+        if 'devide' in protocol:
+            data /= protocol['devide']
         return data
 
 
@@ -37,14 +36,19 @@ class Esp3k5(object):
         if station_id <= 0 or station_id > 99:
             raise ValueError
         self.station_id: int = station_id
-        self.data = None
+        self.data = dict()
 
-    def update_data(self, data):
-        # self.get_rawdata()
+    def update(self):
+        raw_data = self.get_rawdata("COM8", 9600)
+        if self.verify_response(raw_data):
+            self.parse_response(raw_data)
+            return True
+        return False
+
+    def parse_response(self, src: bytes):
+        for key, item in Protocol.response_protocol.items():
+            self.data[key] = Utils.get_data_from_bytes(src, item)
         return True
-        # return True  # 성공 시
-
-        # return False  # 실패 시
 
     def get_rawdata(self, port: str, baudRate: int, timeout=0.1):
 
@@ -64,8 +68,6 @@ class Esp3k5(object):
         return bytes(ret)
 
     def verify_response(self, data):
-        # protocol = Protocol
-        # resIdx = protocol.response_index
         res_proto = Protocol.response_protocol
 
         # check Length
@@ -82,34 +84,8 @@ class Esp3k5(object):
             return False
 
         # checkSum
-        if data[res_proto['checkSum']['idx']] != Helper.calculate_checksum(data[0:-1]):
+        if data[res_proto['checkSum']['idx']] != Utils.calculate_checksum(data[0:-1]):
             return False
-        return True
-
-    def parse_response(self, data):
-        # protocol = Protocol
-        # resIdx = protocol.response_index
-
-        parsed_data = dict()
-        # parsed_data['solarVoltage1'] = 360.5
-        # # parsed_data['solarVoltage1'] = Helper.bytes_to_int((data[3:5]))
-        # parsed_data['solarCurrent'] = Helper.bytes_to_int(data[5:7])
-        # parsed_data['solarVoltage2'] = Helper.bytes_to_int(data[7:9])
-        # parsed_data['lineVoltage'] = Helper.bytes_to_int(data[9:11])
-        # parsed_data['lineCurrent'] = Helper.bytes_to_int(data[11:13])
-        # parsed_data['temperature'] = Helper.bytes_to_int(data[13:15])
-        # parsed_data['energyToday'] = Helper.bytes_to_int(data[15:16])
-        # parsed_data['energyTotal'] = Helper.bytes_to_int(data[17:20])
-        # parsed_data['faultCode'] = Helper.bytes_to_int(data[20:24])
-        # parsed_data['runStatus'] = Helper.bytes_to_int(data[24])
-        # parsed_data['frequency'] = Helper.bytes_to_int(
-        #     data[resIdx.frequency.idx: resIdx.frequency.idx+resIdx.frequency.length])
-        # parsed_data['operationTime'] = Helper.bytes_to_int(data[24])
-        # parsed_data['powerFactor'] = Helper.bytes_to_int(data[24])
-        # parsed_data['DSPVersion'] = Helper.bytes_to_int(data[24])
-        # # pprint(parsed_data)
-        self.data = parsed_data
-
         return True
 
     def __del__(self):
@@ -149,11 +125,10 @@ class Protocol:
 
 
 if __name__ == '__main__':
+    station_id = 1
+    esp3k5 = Esp3k5(station_id)
 
-    import esp3k5_dummy
+    print("before\t", esp3k5.data)
 
-    data = esp3k5_dummy.makeDummyData()
-
-    esp = Esp3k5(1)
-    # esp.request()  # not Implement
-    esp.parse_response(data)
+    esp3k5.update()
+    print("after\t", esp3k5.data)
