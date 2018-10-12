@@ -53,7 +53,11 @@ class Esp3k5Test(unittest.TestCase):
         with self.assertRaises(ValueError):
             esp3k5.Esp3k5(100)
 
-        valid_station_id = 11
+        valid_station_id = 0
+        esp3k5_instance = esp3k5.Esp3k5(valid_station_id)
+        self.assertEqual(esp3k5_instance.station_id, valid_station_id)
+
+        valid_station_id = 99
         esp3k5_instance = esp3k5.Esp3k5(valid_station_id)
         self.assertEqual(esp3k5_instance.station_id, valid_station_id)
 
@@ -137,7 +141,13 @@ class ParseDataTest(unittest.TestCase):
     def setUp(self):
         self.station_id = 1
         self.esp3k5 = esp3k5.Esp3k5(self.station_id)
-        self.rawData = bytearray
+        self.rawData = bytearray([0xB1, 0xB7, 0x01, 0x15, 0x0E,
+                                  0x05, 0x01, 0x01, 0x0E, 0x9A,
+                                  0x08, 0xC8, 0x01, 0x60, 0x01,
+                                  0xFF, 0x00, 0x9F, 0x86, 0x01,
+                                  0x00, 0x00, 0x00, 0x00, 0x01,
+                                  0x59, 0x02, 0x01, 0x01, 0x63,
+                                  0x6E, 0x9D])
 
     def test_get_rawData(self):
         ret = self.esp3k5.get_rawdata("COM8", 9600)

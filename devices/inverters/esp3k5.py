@@ -33,7 +33,7 @@ class Utils:
 class Esp3k5(object):
 
     def __init__(self, station_id: int):
-        if station_id <= 0 or station_id > 99:
+        if station_id < 0 or station_id > 99:
             raise ValueError
         self.station_id: int = station_id
         self.data = dict()
@@ -45,7 +45,7 @@ class Esp3k5(object):
             return True
         return False
 
-    def parse_response(self, src: bytes):
+    def parse_response(self, src):
         for key, item in Protocol.response_protocol.items():
             self.data[key] = Utils.get_data_from_bytes(src, item)
         return True
