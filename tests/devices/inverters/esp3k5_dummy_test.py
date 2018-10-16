@@ -1,5 +1,8 @@
 import pytest
 
+# test skip this file
+pytestmark = pytest.mark.skip
+
 
 @pytest.fixture(scope="module")
 def dummy():

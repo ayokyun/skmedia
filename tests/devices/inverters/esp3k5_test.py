@@ -4,6 +4,10 @@ import unittest
 from devices.inverters import esp3k5
 
 
+# test skip this file
+pytestmark = pytest.mark.skip
+
+
 class UtilsTest(unittest.TestCase):
     utils = esp3k5.Utils
     protocol = esp3k5.Protocol

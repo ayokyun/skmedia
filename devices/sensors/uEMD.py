@@ -1,11 +1,31 @@
 from pymodbus.client.sync import ModbusTcpClient
 
-client = ModbusTcpClient('127.0.0.1')
 
-print(client.is_socket_open())
-r = client.read_holding_registers(0, count=2)
-print(r.registesr)
-# client.write_coil(1, True)
-# result = client.read_coils(1,1)
-# print(result.bits[0])
-client.close()
+class UEMD(object):
+    def __init__(self, host: str, port: int = 502, timeout: int = 3):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+
+    def is_connectable(self):
+        self.client = ModbusTcpClient(
+            host=self.host,
+            port=self.port,
+            timeout=self.timeout
+        )
+        ret = self.client.connect()
+        self.client.close()
+        return ret
+
+    def show(self):
+        r = self.client.read_holding_registers(0, count=2)
+        print(r)
+
+    def __del__(self):
+        self.client.close()
+
+
+if __name__ == '__main__':
+    uemd = UEMD('127.0.0.1')
+
+    uemd.is_connectable()
