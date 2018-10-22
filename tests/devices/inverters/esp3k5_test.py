@@ -5,7 +5,7 @@ from devices.inverters import esp3k5
 
 
 # test skip this file
-pytestmark = pytest.mark.skip
+# pytestmark = pytest.mark.skip
 
 
 class UtilsTest(unittest.TestCase):

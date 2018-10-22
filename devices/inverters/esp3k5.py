@@ -93,7 +93,6 @@ class Esp3k5(object):
 
 
 class Protocol:
-    di = collections.namedtuple("dataInfo", "idx length")
     request_format = [0x0a, 0x96, 0xFF, 0x54, 0x18, 0x05, 0xFF]
 
     request_protocol = {"header": {"idx": 0, "length": 2},
