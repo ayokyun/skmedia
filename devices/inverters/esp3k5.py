@@ -1,6 +1,9 @@
 from pprint import pprint
 import serial
 import collections
+from datetime import datetime
+import graphyte
+import time
 
 
 class Utils:
@@ -25,8 +28,8 @@ class Utils:
         data = raw_data[protocol['idx']:protocol['idx'] + protocol['length']]
         data = int.from_bytes(data, byteorder='little', signed=False)
 
-        if 'devide' in protocol:
-            data /= protocol['devide']
+        if 'divide' in protocol:
+            data /= protocol['divide']
         return data
 
 
@@ -39,7 +42,7 @@ class Esp3k5(object):
         self.data = dict()
 
     def update(self):
-        raw_data = self.get_rawdata("COM8", 9600)
+        raw_data = self.get_rawdata("/dev/ttyUSB0", 9600)
         if self.verify_response(raw_data):
             self.parse_response(raw_data)
             return True
@@ -50,9 +53,9 @@ class Esp3k5(object):
             self.data[key] = Utils.get_data_from_bytes(src, item)
         return True
 
-    def get_rawdata(self, port: str, baudRate: int, timeout=0.1):
+    def get_rawdata(self, port: str, baudRate: int, timeout=1):
 
-        with serial.Serial(port, baudRate, timeout=0.1) as ser:
+        with serial.Serial(port, baudRate, timeout=timeout) as ser:
             ser.write(self.make_request())
             line = ser.readline()  # read a '\n' terminated line
             return line
@@ -105,29 +108,39 @@ class Protocol:
 
     response_protocol = {"header": {"idx": 0, "length": 2},
                          "stationId": {"idx": 2, "length": 1},
-                         "solarVoltage1": {"idx": 3, "length": 2, "devide": 10},
-                         "solarCurrent": {"idx": 5, "length": 2, "devide": 10},
-                         "solarVoltage2": {"idx": 7, "length": 2, "devide": 10},
-                         "lineVoltage": {"idx": 9, "length": 2, "devide": 10},
-                         "lineCurrent": {"idx": 11, "length": 2, "devide": 10},
-                         "temperature": {"idx": 13, "length": 2, "devide": 10},
-                         "energyToday": {"idx": 15, "length": 2, "devide": 100},
+                         "solarVoltage1": {"idx": 3, "length": 2, "divide": 10},
+                         "solarCurrent": {"idx": 5, "length": 2, "divide": 10},
+                         "solarVoltage2": {"idx": 7, "length": 2, "divide": 10},
+                         "lineVoltage": {"idx": 9, "length": 2, "divide": 10},
+                         "lineCurrent": {"idx": 11, "length": 2, "divide": 10},
+                         "temperature": {"idx": 13, "length": 2, "divide": 10},
+                         "energyToday": {"idx": 15, "length": 2, "divide": 100},
                          "energyTotal": {"idx": 17, "length": 3},
                          "faultCode": {"idx": 20, "length": 4},
                          "runStatus": {"idx": 24, "length": 1},
-                         "frequency": {"idx": 25, "length": 2, "devide": 10},
+                         "frequency": {"idx": 25, "length": 2, "divide": 10},
                          "operationTime": {"idx": 27, "length": 2},
-                         "powerFactor": {"idx": 29, "length": 1, "devide": 100},
-                         "dspVersion": {"idx": 30, "length": 1, "devide": 10},
+                         "powerFactor": {"idx": 29, "length": 1, "divide": 100},
+                         "dspVersion": {"idx": 30, "length": 1, "divide": 10},
                          "checkSum": {"idx": 31, "length": 1}
                          }
 
 
 if __name__ == '__main__':
-    station_id = 1
-    esp3k5 = Esp3k5(station_id)
+    graphyte.init('192.168.1.27', prefix='pv')
+    while True:
+        for station_id in [1, 22]:
+            esp3k5 = Esp3k5(station_id)
 
-    print("before\t", esp3k5.data)
+            esp3k5.update()
+            print(f'{station_id:02}\t{datetime.now()}\t{esp3k5.data}')
 
-    esp3k5.update()
-    print("after\t", esp3k5.data)
+            for (k,v) in esp3k5.data.items():
+                k = f'station{station_id:02}.{k}'
+                graphyte.send(k,v)
+
+            if esp3k5.data.items():
+                k = f'station{station_id:02}.linePower'
+                v = esp3k5.data['lineVoltage'] * esp3k5.data['lineCurrent']
+                graphyte.send(k,v)
+        time.sleep(5)
